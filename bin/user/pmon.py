@@ -42,7 +42,7 @@ import weedb
 import weeutil.weeutil
 from weewx.engine import StdService
 
-VERSION = "0.4"
+VERSION = "0.5"
 
 def logmsg(level, msg):
     syslog.syslog(level, 'pmon: %s' % msg)
@@ -130,7 +130,10 @@ class ProcessMonitor(StdService):
         record['usUnits'] = weewx.METRIC
         record['interval'] = int((now_ts - last_ts) / 60)
         try:
-            cmd = 'ps aux'
+            wx_pid = os.getpid()
+           # cmd = 'ps aux'
+            cmd = 'ps up wx_pid '
+            loginf("PID is %s" % wx_pid)
             p = Popen(cmd, shell=True, stdout=PIPE)
             o = p.communicate()[0]
             for line in o.split('\n'):
