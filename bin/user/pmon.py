@@ -22,7 +22,7 @@ Add the following to weewx.conf:
 
 [Databases]
     [[pmon_sqlite]]
-        database_name = archive/pmon.sdb
+        database_name = archive/pmon+.sdb
         database_type = SQLite
 
 [Engine]
@@ -45,7 +45,7 @@ from weewx.engine import StdService
 VERSION = "0.5"
 
 def logmsg(level, msg):
-    syslog.syslog(level, 'pmon: %s' % msg)
+    syslog.syslog(level, 'pmon+: %s' % msg)
 
 def logdbg(msg):
     logmsg(syslog.LOG_DEBUG, msg)
@@ -62,7 +62,23 @@ schema = [
     ('interval', 'INTEGER NOT NULL'),
     ('mem_vsz', 'INTEGER'),
     ('mem_rss', 'INTEGER'),
+    ('swap_total', 'INTEGER'),
+    ('swap_free', 'INTEGER'),
+    ('swap_used', 'INTEGER'),
 ]
+
+# add the required units and then
+# add databinding stanza to [CheetahGenerator] in .conf
+weewx.units.obs_group_dict['mem_vsz'] = 'group_bytes'
+weewx.units.obs_group_dict['mem_rss'] = 'group_bytes'
+weewx.units.obs_group_dict['swap_total'] = 'group_bytes'
+weewx.units.obs_group_dict['swap_free'] = 'group_bytes'
+weewx.units.obs_group_dict['swap_used'] = 'group_bytes'
+weewx.units.USUnits['group_bytes'] = 'kB'
+weewx.units.MetricUnits['group_bytes'] = 'kB'
+weewx.units.MetricWXUnits['group_bytes'] = 'kB'
+weewx.units.default_unit_format_dict['kB'] = '%.0f'
+weewx.units.default_unit_label_dict['kB'] = ' kB'
 
 
 class ProcessMonitor(StdService):
@@ -81,7 +97,8 @@ class ProcessMonitor(StdService):
 
         # be sure database matches the schema we have
         dbcol = self.dbm.connection.columnsOf(self.dbm.table_name)
-        dbm_dict = weewx.manager.get_manager_dict_from_config(config_dict, binding)
+        dbm_dict = weewx.manager.get_manager_dict_from_config(config_dict,
+                                                              binding)
         memcol = [x[0] for x in dbm_dict['schema']]
         if dbcol != memcol:
             raise Exception('pmon schema mismatch: %s != %s' % (dbcol, memcol))
@@ -129,21 +146,41 @@ class ProcessMonitor(StdService):
         record['dateTime'] = now_ts
         record['usUnits'] = weewx.METRIC
         record['interval'] = int((now_ts - last_ts) / 60)
+        #  get_mem_data()
         try:
-            wx_pid = os.getpid()
-           # cmd = 'ps aux'
-            cmd = 'ps up wx_pid '
-            loginf("PID is %s" % wx_pid)
+            self.wx_pid = str(os.getpid())
+            cmd = 'ps up '+self.wx_pid
+            loginf("cmd is %s" % cmd)
             p = Popen(cmd, shell=True, stdout=PIPE)
             o = p.communicate()[0]
             for line in o.split('\n'):
+                #  loginf("line is %s" % line)
                 if line.find(self.process) >= 0:
                     m = self.COLUMNS.search(line)
                     if m:
                         record['mem_vsz'] = int(m.group(1))
                         record['mem_rss'] = int(m.group(2))
         except (ValueError, IOError, KeyError), e:
-            logerr('apcups_info failed: %s' % e)
+            logerr('%s failed: %s' % (cmd, e))
+
+        # now get swap data
+        # ( from mwalls cmon )
+        filename = '/proc/meminfo'
+        try:
+            mem_ = dict()
+            with open(filename) as fp:
+                for memline in fp:
+                    #  loginf("memline is %s" % memline)
+                    if memline.find(':') >= 0:
+                        (n, v) = memline.split(':', 1)
+                        mem_[n.strip()] = v.strip()
+            if mem_:
+                record['swap_total'] = int(mem_['SwapTotal'].split()[0])  # kB
+                record['swap_free'] = int(mem_['SwapFree'].split()[0])  # kB
+                record['swap_used'] = record['swap_total'] - record['swap_free']
+        except Exception, e:
+            logdbg("read failed for %s: %s" % (filename, e))
+
         return record
 
 
@@ -174,7 +211,7 @@ if __name__ == "__main__":
                 'schema': 'user.pmon.schema'}},
         'Databases': {
             'pmon_sqlite': {
-                'database_name': 'pmon.sdb',
+                'database_name': 'pmon+.sdb',
                 'database_type': 'SQLite'}},
         'DatabaseTypes': {
             'SQLite': {
@@ -201,4 +238,4 @@ if __name__ == "__main__":
     rec = svc.get_data(nowts, lastts)
     print rec
 
-    os.remove('/var/tmp/pmon.sdb')
+    os.remove('/var/tmp/pmon+.sdb')

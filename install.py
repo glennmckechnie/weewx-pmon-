@@ -1,5 +1,6 @@
-# installer for pmon
+# installer for pmon+ (was pmon)
 # Copyright 2014 Matthew Wall
+# temp renamed by glenn mckechnie
 
 from setup import ExtensionInstaller
 
@@ -10,7 +11,7 @@ class ProcessMonitorInstaller(ExtensionInstaller):
     def __init__(self):
         super(ProcessMonitorInstaller, self).__init__(
             version="0.5",
-            name='pmon',
+            name='pmon+',
             description='Collect and display process memory usage.',
             author="Matthew Wall",
             author_email="mwall@users.sourceforge.net",
@@ -27,7 +28,7 @@ class ProcessMonitorInstaller(ExtensionInstaller):
                         'schema': 'user.pmon.schema'}},
                 'Databases': {
                     'pmon_sqlite': {
-                        'database_name': 'pmon.sdb',
+                        'database_name': 'pmon+.sdb',
                         'driver': 'weedb.sqlite'}},
                 'StdReport': {
                     'pmon': {
