@@ -36,6 +36,7 @@ import re
 import syslog
 import time
 from subprocess import Popen, PIPE
+import resource
 
 import weewx
 import weedb
@@ -69,6 +70,7 @@ schema = [
     ('interval', 'INTEGER NOT NULL'),
     ('mem_vsz', 'INTEGER'),
     ('mem_rss', 'INTEGER'),
+    ('res_rss', 'INTEGER'),
     ('swap_total', 'INTEGER'),
     ('swap_free', 'INTEGER'),
     ('swap_used', 'INTEGER'),
@@ -81,6 +83,7 @@ schema = [
 # add databinding stanza to [CheetahGenerator] in .conf
 weewx.units.obs_group_dict['mem_vsz'] = 'group_data'
 weewx.units.obs_group_dict['mem_rss'] = 'group_data'
+weewx.units.obs_group_dict['res_rss'] = 'group_data'
 weewx.units.obs_group_dict['swap_total'] = 'group_data'
 weewx.units.obs_group_dict['swap_free'] = 'group_data'
 weewx.units.obs_group_dict['swap_used'] = 'group_data'
@@ -89,7 +92,7 @@ weewx.units.obs_group_dict['mem_free'] = 'group_data'
 weewx.units.obs_group_dict['mem_used'] = 'group_data'
 weewx.units.USUnits['group_data'] = 'kB'
 weewx.units.MetricUnits['group_data'] = 'kB'
-weewx.units.MetricWXUnits['group_data'] = 'kB'
+#weewx.units.MetricWXUnits['group_data'] = 'kB'
 weewx.units.default_unit_format_dict['kB'] = '%.0f'
 weewx.units.default_unit_label_dict['kB'] = ' kB'
 # 1 Byte = 0.000001 MB (in decimal)
@@ -199,6 +202,8 @@ class ProcessMonitor(StdService):
                 record['swap_used'] = record['swap_total'] - record['swap_free']
         except Exception, e:
             logdbg("read failed for %s: %s" % (filename, e))
+
+        record['res_rss'] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
         return record
 
