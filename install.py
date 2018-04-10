@@ -10,7 +10,7 @@ def loader():
 class ProcessMonitorInstaller(ExtensionInstaller):
     def __init__(self):
         super(ProcessMonitorInstaller, self).__init__(
-            version="0.5",
+            version="0.5.1",
             name='pmon+',
             description='Collect and display process memory usage.',
             author="Matthew Wall",

@@ -42,7 +42,7 @@ import weedb
 import weeutil.weeutil
 from weewx.engine import StdService
 
-VERSION = "0.5"
+VERSION = "0.5.1"
 
 def logmsg(level, msg):
     syslog.syslog(level, 'pmon+: %s' % msg)
@@ -56,6 +56,13 @@ def loginf(msg):
 def logerr(msg):
     logmsg(syslog.LOG_ERR, msg)
 
+#  root@whitebeard:/tmp# sqlite3 /var/lib/weewx/pmon+.sdb
+#  SQLite version 3.22.0 2018-01-22 18:45:57
+#  Enter ".help" for usage hints.
+#  sqlite> ALTER TABLE `archive` ADD `mem_total` INTEGER `swap_used`;
+#  sqlite> ALTER TABLE `archive` ADD `mem_free` INTEGER `mem_total`;
+#  sqlite> ALTER TABLE `archive` ADD `mem_used` INTEGER `mem_free`;
+
 schema = [
     ('dateTime', 'INTEGER NOT NULL PRIMARY KEY'),
     ('usUnits', 'INTEGER NOT NULL'),
@@ -65,20 +72,28 @@ schema = [
     ('swap_total', 'INTEGER'),
     ('swap_free', 'INTEGER'),
     ('swap_used', 'INTEGER'),
+    ('mem_total', 'INTEGER'),
+    ('mem_free', 'INTEGER'),
+    ('mem_used', 'INTEGER'),
 ]
 
 # add the required units and then
 # add databinding stanza to [CheetahGenerator] in .conf
-weewx.units.obs_group_dict['mem_vsz'] = 'group_bytes'
-weewx.units.obs_group_dict['mem_rss'] = 'group_bytes'
-weewx.units.obs_group_dict['swap_total'] = 'group_bytes'
-weewx.units.obs_group_dict['swap_free'] = 'group_bytes'
-weewx.units.obs_group_dict['swap_used'] = 'group_bytes'
-weewx.units.USUnits['group_bytes'] = 'kB'
-weewx.units.MetricUnits['group_bytes'] = 'kB'
-weewx.units.MetricWXUnits['group_bytes'] = 'kB'
+weewx.units.obs_group_dict['mem_vsz'] = 'group_data'
+weewx.units.obs_group_dict['mem_rss'] = 'group_data'
+weewx.units.obs_group_dict['swap_total'] = 'group_data'
+weewx.units.obs_group_dict['swap_free'] = 'group_data'
+weewx.units.obs_group_dict['swap_used'] = 'group_data'
+weewx.units.obs_group_dict['mem_total'] = 'group_data'
+weewx.units.obs_group_dict['mem_free'] = 'group_data'
+weewx.units.obs_group_dict['mem_used'] = 'group_data'
+weewx.units.USUnits['group_data'] = 'kB'
+weewx.units.MetricUnits['group_data'] = 'kB'
+weewx.units.MetricWXUnits['group_data'] = 'kB'
 weewx.units.default_unit_format_dict['kB'] = '%.0f'
 weewx.units.default_unit_label_dict['kB'] = ' kB'
+# 1 Byte = 0.000001 MB (in decimal)
+weewx.units.conversionDict['kB'] = {'B': lambda x: x * 0.001}
 
 
 class ProcessMonitor(StdService):
@@ -175,8 +190,12 @@ class ProcessMonitor(StdService):
                         (n, v) = memline.split(':', 1)
                         mem_[n.strip()] = v.strip()
             if mem_:
-                record['swap_total'] = int(mem_['SwapTotal'].split()[0])  # kB
-                record['swap_free'] = int(mem_['SwapFree'].split()[0])  # kB
+                # returned values are in kB
+                record['mem_total'] = int(mem_['MemTotal'].split()[0])
+                record['mem_free'] = int(mem_['MemFree'].split()[0])
+                record['mem_used'] = record['mem_total'] - record['mem_free']
+                record['swap_total'] = int(mem_['SwapTotal'].split()[0])
+                record['swap_free'] = int(mem_['SwapFree'].split()[0])
                 record['swap_used'] = record['swap_total'] - record['swap_free']
         except Exception, e:
             logdbg("read failed for %s: %s" % (filename, e))
