@@ -11,23 +11,23 @@ Configuration
 Add the following to weewx.conf:
 
 [ProcessMonitor]
-    data_binding = pmon_binding
+    data_binding = pmon+_binding
 
 [DataBindings]
-    [[pmon_binding]]
-        database = pmon_sqlite
+    [[pmon+_binding]]
+        database = pmon+_sqlite
         manager = weewx.manager.DaySummaryManager
         table_name = archive
-        schema = user.pmon.schema
+        schema = user.pmon+.schema
 
 [Databases]
-    [[pmon_sqlite]]
+    [[pmon+_sqlite]]
         database_name = archive/pmon+.sdb
         database_type = SQLite
 
 [Engine]
     [[Services]]
-        archive_services = ..., user.pmon.ProcessMonitor
+        archive_services = ..., user.pmon+.ProcessMonitor
 """
 
 import os
@@ -56,13 +56,6 @@ def loginf(msg):
 
 def logerr(msg):
     logmsg(syslog.LOG_ERR, msg)
-
-#  root@whitebeard:/tmp# sqlite3 /var/lib/weewx/pmon+.sdb
-#  SQLite version 3.22.0 2018-01-22 18:45:57
-#  Enter ".help" for usage hints.
-#  sqlite> ALTER TABLE `archive` ADD `mem_total` INTEGER `swap_used`;
-#  sqlite> ALTER TABLE `archive` ADD `mem_free` INTEGER `mem_total`;
-#  sqlite> ALTER TABLE `archive` ADD `mem_used` INTEGER `mem_free`;
 
 schema = [
     ('dateTime', 'INTEGER NOT NULL PRIMARY KEY'),
@@ -104,15 +97,14 @@ class ProcessMonitor(StdService):
         super(ProcessMonitor, self).__init__(engine, config_dict)
 
         loginf("service version %s" % VERSION)
-        d = config_dict.get('ProcessMonitor', {})
-        self.process = d.get('process', 'weewxd')
+        d = config_dict.get('ProcessMonitor+', {})
         self.max_age = weeutil.weeutil.to_int(d.get('max_age', 2592000))
         # loginf("pmon+ max_age is %s" % self.max_age)
         self.meg = int(d.get('units', '1024'))
         # loginf("pmon+ units are %s" % self.meg)
 
         # get the database parameters we need to function
-        binding = d.get('data_binding', 'pmon_binding')
+        binding = d.get('data_binding', 'pmon+_binding')
         self.dbm = self.engine.db_binder.get_manager(data_binding=binding,
                                                      initialize=True)
 
@@ -122,7 +114,7 @@ class ProcessMonitor(StdService):
                                                               binding)
         memcol = [x[0] for x in dbm_dict['schema']]
         if dbcol != memcol:
-            raise Exception('pmon schema mismatch: %s != %s' % (dbcol, memcol))
+            raise Exception('pmon+ schema mismatch: %s != %s' % (dbcol, memcol))
 
         self.last_ts = None
         self.bind(weewx.NEW_ARCHIVE_RECORD, self.new_archive_record)
@@ -176,7 +168,7 @@ class ProcessMonitor(StdService):
             o = p.communicate()[0]
             for line in o.split('\n'):
                 #  loginf("line is %s" % line)
-                if line.find(self.process) >= 0:
+                if line.find(self.wx_pid) >= 0:
                     m = self.COLUMNS.search(line)
                     if m:
                         record['mem_vsz'] = (int(m.group(1))/self.meg)
@@ -213,8 +205,15 @@ class ProcessMonitor(StdService):
 
 # what follows is a basic unit test of this module.  to run the test:
 #
-# cd /home/weewx
-# PYTHONPATH=bin python bin/user/pmon.py
+# For Debian or Redhat/CentOS
+#
+# cd /to_where/pmon+lives
+#
+# PYTHONPATH=/usr/share/weewx/  python pmon+.py
+#
+# Of note - this version uses the PID of the calling process, which will be
+# your terminal, or script. It will not be weewxd itself.
+# The test still works to catch coding errors though!
 #
 if __name__ == "__main__":
     from weewx.engine import StdEngine
@@ -227,17 +226,16 @@ if __name__ == "__main__":
         'Simulator': {
             'driver': 'weewx.drivers.simulator',
             'mode': 'simulator'},
-        'ProcessMonitor': {
-            'data_binding': 'pmon_binding',
-            'process': 'weewxd'},
+        'ProcessMonitor+': {
+            'data_binding': 'pmon+_binding'},
         'DataBindings': {
-            'pmon_binding': {
-                'database': 'pmon_sqlite',
+            'pmon+_binding': {
+                'database': 'pmon+_sqlite',
                 'manager': 'weewx.manager.DaySummaryManager',
                 'table_name': 'archive',
-                'schema': 'user.pmon.schema'}},
+                'schema': 'user.pmon+.schema'}},
         'Databases': {
-            'pmon_sqlite': {
+            'pmon+_sqlite': {
                 'database_name': 'pmon+.sdb',
                 'database_type': 'SQLite'}},
         'DatabaseTypes': {
@@ -246,23 +244,28 @@ if __name__ == "__main__":
                 'SQLITE_ROOT': '/var/tmp'}},
         'Engine': {
             'Services': {
-                'process_services': 'user.pmon.ProcessMonitor'}}}
+                'process_services': 'user.pmon+.ProcessMonitor'}}}
     eng = StdEngine(config)
     svc = ProcessMonitor(eng, config)
 
+    wx_pid = str(os.getpid())
+    print ("process PID is %s" % wx_pid)
     nowts = lastts = int(time.time())
     rec = svc.get_data(nowts, lastts)
     print rec
 
     time.sleep(5)
+    print ("process PID is %s" % wx_pid)
     nowts = int(time.time())
     rec = svc.get_data(nowts, lastts)
     print rec
 
     time.sleep(5)
+    print ("process PID is %s" % wx_pid)
     lastts = nowts
     nowts = int(time.time())
     rec = svc.get_data(nowts, lastts)
     print rec
 
     os.remove('/var/tmp/pmon+.sdb')
+    print "removed %s" % '/var/tmp/pmon+.sdb'

@@ -13,19 +13,18 @@ class ProcessMonitorInstaller(ExtensionInstaller):
             version="0.5.3",
             name='pmon+',
             description='Collect and display the memory usage of the weewx process.',
-            author="Matthew Wall",
-            author_email="mwall@users.sourceforge.net",
+            author="Matthew Wall, modified by Glenn McKechnie",
+            author_email="<mwall@users.sourceforge.net>, <glenn.mckechnie@gmail.com>",
             process_services='user.pmon+.ProcessMonitor',
             config={
-                'ProcessMonitor': {
-                    'data_binding': 'pmon_binding',
-                    'process': 'weewxd'},
+                'ProcessMonitor+': {
+                    'data_binding': 'pmon+_binding'},
                 'DataBindings': {
-                    'pmon_binding': {
+                    'pmon+_binding': {
                         'database': 'pmon+_sqlite',
                         'table_name': 'archive',
                         'manager': 'weewx.manager.DaySummaryManager',
-                        'schema': 'user.pmon.schema'}},
+                        'schema': 'user.pmon+.schema'}},
                 'Databases': {
                     'pmon+_sqlite': {
                         'database_name': 'pmon+.sdb',
@@ -34,7 +33,7 @@ class ProcessMonitorInstaller(ExtensionInstaller):
                     'pmon+': {
                         'skin': 'pmon+',
                         'HTML_ROOT': 'pmon+'}}},
-            files=[('bin/user', ['bin/user/pmon.py']),
+            files=[('bin/user', ['bin/user/pmon+.py']),
                    ('skins/pmon+', ['skins/pmon+/skin.conf',
-                                   'skins/pmon+/index.html.tmpl'])]
+                                    'skins/pmon+/index.html.tmpl'])]
             )
