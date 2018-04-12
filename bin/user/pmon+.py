@@ -43,7 +43,7 @@ import weedb
 import weeutil.weeutil
 from weewx.engine import StdService
 
-VERSION = "0.5.1"
+VERSION = "0.5.3"
 
 def logmsg(level, msg):
     syslog.syslog(level, 'pmon+: %s' % msg)
@@ -90,13 +90,12 @@ weewx.units.obs_group_dict['swap_used'] = 'group_data'
 weewx.units.obs_group_dict['mem_total'] = 'group_data'
 weewx.units.obs_group_dict['mem_free'] = 'group_data'
 weewx.units.obs_group_dict['mem_used'] = 'group_data'
-weewx.units.USUnits['group_data'] = 'kB'
-weewx.units.MetricUnits['group_data'] = 'kB'
-#weewx.units.MetricWXUnits['group_data'] = 'kB'
-weewx.units.default_unit_format_dict['kB'] = '%.0f'
-weewx.units.default_unit_label_dict['kB'] = ' kB'
+weewx.units.USUnits['group_data'] = 'MB'
+weewx.units.MetricUnits['group_data'] = 'MB'
+weewx.units.default_unit_format_dict['MB'] = '%.0f'
+weewx.units.default_unit_label_dict['MB'] = ' MB'
 # 1 Byte = 0.000001 MB (in decimal)
-weewx.units.conversionDict['kB'] = {'B': lambda x: x * 0.001}
+weewx.units.conversionDict['MB'] = {'B': lambda x: x * 0.000001}
 
 
 class ProcessMonitor(StdService):
@@ -104,9 +103,13 @@ class ProcessMonitor(StdService):
     def __init__(self, engine, config_dict):
         super(ProcessMonitor, self).__init__(engine, config_dict)
 
+        loginf("service version %s" % VERSION)
         d = config_dict.get('ProcessMonitor', {})
         self.process = d.get('process', 'weewxd')
         self.max_age = weeutil.weeutil.to_int(d.get('max_age', 2592000))
+        # loginf("pmon+ max_age is %s" % self.max_age)
+        self.meg = int(d.get('units', '1024'))
+        # loginf("pmon+ units are %s" % self.meg)
 
         # get the database parameters we need to function
         binding = d.get('data_binding', 'pmon_binding')
@@ -176,8 +179,8 @@ class ProcessMonitor(StdService):
                 if line.find(self.process) >= 0:
                     m = self.COLUMNS.search(line)
                     if m:
-                        record['mem_vsz'] = int(m.group(1))
-                        record['mem_rss'] = int(m.group(2))
+                        record['mem_vsz'] = (int(m.group(1))/self.meg)
+                        record['mem_rss'] = (int(m.group(2))/self.meg)
         except (ValueError, IOError, KeyError), e:
             logerr('%s failed: %s' % (cmd, e))
 
@@ -193,17 +196,17 @@ class ProcessMonitor(StdService):
                         (n, v) = memline.split(':', 1)
                         mem_[n.strip()] = v.strip()
             if mem_:
-                # returned values are in kB
-                record['mem_total'] = int(mem_['MemTotal'].split()[0])
-                record['mem_free'] = int(mem_['MemFree'].split()[0])
+                # returned values are in MB
+                record['mem_total'] = (int(mem_['MemTotal'].split()[0])/self.meg)
+                record['mem_free'] = (int(mem_['MemFree'].split()[0])/self.meg)
                 record['mem_used'] = record['mem_total'] - record['mem_free']
-                record['swap_total'] = int(mem_['SwapTotal'].split()[0])
-                record['swap_free'] = int(mem_['SwapFree'].split()[0])
+                record['swap_total'] = (int(mem_['SwapTotal'].split()[0])/self.meg)
+                record['swap_free'] = (int(mem_['SwapFree'].split()[0])/self.meg)
                 record['swap_used'] = record['swap_total'] - record['swap_free']
         except Exception, e:
             logdbg("read failed for %s: %s" % (filename, e))
 
-        record['res_rss'] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        record['res_rss'] = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/self.meg
 
         return record
 

@@ -1,6 +1,6 @@
 # installer for pmon+ (was pmon)
 # Copyright 2014 Matthew Wall
-# temp renamed by glenn mckechnie
+# modified 2018 by glenn mckechnie
 
 from setup import ExtensionInstaller
 
@@ -10,31 +10,31 @@ def loader():
 class ProcessMonitorInstaller(ExtensionInstaller):
     def __init__(self):
         super(ProcessMonitorInstaller, self).__init__(
-            version="0.5.1",
+            version="0.5.3",
             name='pmon+',
-            description='Collect and display process memory usage.',
+            description='Collect and display the memory usage of the weewx process.',
             author="Matthew Wall",
             author_email="mwall@users.sourceforge.net",
-            process_services='user.pmon.ProcessMonitor',
+            process_services='user.pmon+.ProcessMonitor',
             config={
                 'ProcessMonitor': {
                     'data_binding': 'pmon_binding',
                     'process': 'weewxd'},
                 'DataBindings': {
                     'pmon_binding': {
-                        'database': 'pmon_sqlite',
+                        'database': 'pmon+_sqlite',
                         'table_name': 'archive',
                         'manager': 'weewx.manager.DaySummaryManager',
                         'schema': 'user.pmon.schema'}},
                 'Databases': {
-                    'pmon_sqlite': {
+                    'pmon+_sqlite': {
                         'database_name': 'pmon+.sdb',
                         'driver': 'weedb.sqlite'}},
                 'StdReport': {
-                    'pmon': {
-                        'skin': 'pmon',
-                        'HTML_ROOT': 'pmon'}}},
+                    'pmon+': {
+                        'skin': 'pmon+',
+                        'HTML_ROOT': 'pmon+'}}},
             files=[('bin/user', ['bin/user/pmon.py']),
-                   ('skins/pmon', ['skins/pmon/skin.conf',
-                                   'skins/pmon/index.html.tmpl'])]
+                   ('skins/pmon+', ['skins/pmon+/skin.conf',
+                                   'skins/pmon+/index.html.tmpl'])]
             )
