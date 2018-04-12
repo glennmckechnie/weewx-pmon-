@@ -61,15 +61,15 @@ schema = [
     ('dateTime', 'INTEGER NOT NULL PRIMARY KEY'),
     ('usUnits', 'INTEGER NOT NULL'),
     ('interval', 'INTEGER NOT NULL'),
-    ('mem_vsz', 'INTEGER'),
-    ('mem_rss', 'INTEGER'),
-    ('res_rss', 'INTEGER'),
-    ('swap_total', 'INTEGER'),
-    ('swap_free', 'INTEGER'),
-    ('swap_used', 'INTEGER'),
-    ('mem_total', 'INTEGER'),
-    ('mem_free', 'INTEGER'),
-    ('mem_used', 'INTEGER'),
+    ('mem_vsz', 'REAL'),
+    ('mem_rss', 'REAL'),
+    ('res_rss', 'REAL'),
+    ('swap_total', 'REAL'),
+    ('swap_free', 'REAL'),
+    ('swap_used', 'REAL'),
+    ('mem_total', 'REAL'),
+    ('mem_free', 'REAL'),
+    ('mem_used', 'REAL'),
 ]
 
 # add the required units and then
@@ -85,7 +85,7 @@ weewx.units.obs_group_dict['mem_free'] = 'group_data'
 weewx.units.obs_group_dict['mem_used'] = 'group_data'
 weewx.units.USUnits['group_data'] = 'MB'
 weewx.units.MetricUnits['group_data'] = 'MB'
-weewx.units.default_unit_format_dict['MB'] = '%.0f'
+weewx.units.default_unit_format_dict['MB'] = '%.2f'
 weewx.units.default_unit_label_dict['MB'] = ' MB'
 # 1 Byte = 0.000001 MB (in decimal)
 weewx.units.conversionDict['MB'] = {'B': lambda x: x * 0.000001}
@@ -100,7 +100,7 @@ class ProcessMonitor(StdService):
         d = config_dict.get('ProcessMonitor+', {})
         self.max_age = weeutil.weeutil.to_int(d.get('max_age', 2592000))
         # loginf("pmon+ max_age is %s" % self.max_age)
-        self.meg = int(d.get('units', '1024'))
+        self.meg = float(d.get('units', '1024'))
         # loginf("pmon+ units are %s" % self.meg)
 
         # get the database parameters we need to function
@@ -171,8 +171,8 @@ class ProcessMonitor(StdService):
                 if line.find(self.wx_pid) >= 0:
                     m = self.COLUMNS.search(line)
                     if m:
-                        record['mem_vsz'] = (int(m.group(1))/self.meg)
-                        record['mem_rss'] = (int(m.group(2))/self.meg)
+                        record['mem_vsz'] = (float(m.group(1))/self.meg)
+                        record['mem_rss'] = (float(m.group(2))/self.meg)
         except (ValueError, IOError, KeyError), e:
             logerr('%s failed: %s' % (cmd, e))
 
@@ -189,16 +189,16 @@ class ProcessMonitor(StdService):
                         mem_[n.strip()] = v.strip()
             if mem_:
                 # returned values are in MB
-                record['mem_total'] = (int(mem_['MemTotal'].split()[0])/self.meg)
-                record['mem_free'] = (int(mem_['MemFree'].split()[0])/self.meg)
+                record['mem_total'] = (float(mem_['MemTotal'].split()[0])/self.meg)
+                record['mem_free'] = (float(mem_['MemFree'].split()[0])/self.meg)
                 record['mem_used'] = record['mem_total'] - record['mem_free']
-                record['swap_total'] = (int(mem_['SwapTotal'].split()[0])/self.meg)
-                record['swap_free'] = (int(mem_['SwapFree'].split()[0])/self.meg)
+                record['swap_total'] = (float(mem_['SwapTotal'].split()[0])/self.meg)
+                record['swap_free'] = (float(mem_['SwapFree'].split()[0])/self.meg)
                 record['swap_used'] = record['swap_total'] - record['swap_free']
         except Exception, e:
             logdbg("read failed for %s: %s" % (filename, e))
 
-        record['res_rss'] = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/self.meg
+        record['res_rss'] = float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/self.meg
 
         return record
 
@@ -249,19 +249,19 @@ if __name__ == "__main__":
     svc = ProcessMonitor(eng, config)
 
     wx_pid = str(os.getpid())
-    print ("process PID is %s" % wx_pid)
+    print("process PID is %s" % wx_pid)
     nowts = lastts = int(time.time())
     rec = svc.get_data(nowts, lastts)
     print rec
 
     time.sleep(5)
-    print ("process PID is %s" % wx_pid)
+    print("process PID is %s" % wx_pid)
     nowts = int(time.time())
     rec = svc.get_data(nowts, lastts)
     print rec
 
     time.sleep(5)
-    print ("process PID is %s" % wx_pid)
+    print("process PID is %s" % wx_pid)
     lastts = nowts
     nowts = int(time.time())
     rec = svc.get_data(nowts, lastts)
