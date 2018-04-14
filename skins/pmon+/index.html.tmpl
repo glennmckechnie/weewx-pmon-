@@ -1,46 +1,47 @@
 ## pmon for weewx - Copyright 2013-2014 Matthew Wall
 #errorCatcher Echo
 #encoding UTF-8
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html>
+<!doctype html>
+<html lang="en">
   <head>
-    <!-- pmon for weewx - Copyright Matthew Wall -->
-    <title>pmon</title>
-    <style>
-body {
-  font-family: Verdana, Arial, Helvetica, sans-serif;
-  font-size: 10pt;
-  background-color: #ffffff;
-}
-    </style>
+   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+   <meta http-equiv="Pragma" content="no-cache"/>
+   <meta http-equiv="Expires" content="0"/>
+   <!-- pmon for weewx - Copyright Matthew Wall -->
+   <title>pmon+</title>
+   <style>
+   body {
+         font-family: Verdana, Arial, Helvetica, sans-serif;
+         font-size: 10pt;
+         background-color: #ffffff;
+        }
+   </style>
   </head>
 
   <body>
-    <img src="dayprocmem.png" title="mem_vsz = $latest.mem_vsz : res_rss = $latest.res_rss : mem_rss = $latest.mem_rss" /></br>
-    <img src="weekprocmem.png" title="mem_vsz = $latest.mem_vsz : res_rss = $latest.res_rss : memrss = $latest.mem_rss" /></br>
-    <img src="monthprocmem.png" title="mem_vsz = $latest.mem_vsz : res_rss = $latest.res_rss : memrss = $latest.mem_rss" /></br>
-   <p>
-   Latest values for charts are...<br>
-   <b>
-    mem_vsz = $latest.mem_vsz<br>
-    res_rss = $latest.res_rss<br>
-    mem_rss = $latest.mem_rss<br>
-   </b>
-   Derived from the following commands or codes output where...<br>
-   <b>
-    mem_vsz = VSZ<br>
-    mem_rss = RSS<br>
-    res_rss</b> = the python code snippet.<br>
-   <pre>
-    10:54 PM $ ps auxf | head -n1 ; ps auxf | grep [w]eewxd
-    USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-    root      6087 15.7  1.4 107324 55132 ?        Sl   22:38   2:39 python /usr/bin/weewxd --daemon --pidfile=/var/run/weewx.pid /etc/weewx/weewx.conf
+    <img src="dayprocmem.png" title="mem_vsz = $latest.mem_vsz : res_rss = $latest.res_rss : mem_rss = $latest.mem_rss" alt="day" /><br>
+    <img src="weekprocmem.png" title="mem_vsz = $latest.mem_vsz : res_rss = $latest.res_rss : memrss = $latest.mem_rss" alt="week" /><br>
+    <img src="monthprocmem.png" title="mem_vsz = $latest.mem_vsz : res_rss = $latest.res_rss : memrss = $latest.mem_rss" alt="month" /><br>
+    Latest values from the above charts are...<br>
+    <b>
+     mem_vsz = $latest.mem_vsz<br>
+     res_rss = $latest.res_rss<br>
+     mem_rss = $latest.mem_rss<br>
+    </b>
+    <hr>
+    The above values are obtained from the following commands or code output where...<br><br>
+     <b>mem_vsz = VSZ</b> the ps auxf output (enter 'man ps' on your system))<br>
+     <b>mem_rss = RSS</b> also the ps auxf output, or read <a href="http://en.wikipedia.org/wiki/Ps_(Unix)">ps at wikipedia</a><br>
+     <b>res_rss</b> from the python code snippet, see <a href="https://pymotw.com/2/resource/">python-resource</a><br>
+     (Python-resource is a useful tool to debug your code, sprinkle a few lines around the code to zero in on suspicous areas.)<br>
+    <pre>
+     10:54 PM $ ps auxf | head -n1 ; ps auxf | grep [w]eewxd
+     USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+     root      6087 15.7  1.4 107324 55132 ?        Sl   22:38   2:39 python /usr/bin/weewxd --daemon --pidfile=/var/run/weewx.pid /etc/weewx/weewx.conf
     
-    import resource
-    res_rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-   </pre>
-   </p>
+     import resource
+     res_rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    </pre>
     <!-- iframe width="50%" height="300" scrolling="auto" src="../heap/index.html"></iframe></br -->
-
   </body>
 </html>
