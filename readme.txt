@@ -3,8 +3,8 @@ Copyright 2014 Matthew Wall
 Source at doc/weewx/examples/pmon
 #
 pmon+ - Process Monitor+
-Modified 2018 by Glenn McKechnie to become
-Database changes require the renaming to prevent clashes.
+Modified and renamed 2018 by Glenn McKechnie
+Database changes require a renaming to prevent clashes.
 https://github.com/glennmckechnie/weewx-pmonplus
 #
 
@@ -28,12 +28,12 @@ The pmon+ (2018) modifications increases the fields that are captured.
     ('mem_used', 'INTEGER'),
 
 mem_vsz and mem_rss are as per the original pmon except they are
-identified by the process PID rather than the provcess name (weewxd)
+identified by the process PID rather than the process name (weewxd)
 This enables pmon+ to be run with multiple instances of weewx running on
 the same machine.
 
 res_rss is max rss as returned from the python resource module. (which
-can be inserted into the weewx scripts for troubleshooting)
+can be inserted into the python (weewx) scripts for troubleshooting)
 
 swap_total, swap_free, swap_used are values returned by cat /proc/meminfo
 
@@ -44,11 +44,14 @@ Not all values are plotted by default. User choice decides.
 
 
 Installation instructions:
+1. download the package:
+wget -O weewx-pmon+.tar.gz https://github.com/glennmckechnie/weewx-pmonplus/archive/master.zip
+
 
 1) run the installer:
+use the package name (master.zip)
 
-wee_extension --install pmon+  # (or package name)
-
+wee_extension --install pmon+.tar.gz
 2) restart weewx:
 
 sudo /etc/init.d/weewx stop
@@ -57,7 +60,7 @@ sudo /etc/init.d/weewx start
 
 This will result in a skin called pmon+ with a single web page that illustrates
 how to use the monitoring data.  See comments in pmon+.py for customization
-options, also review the original pmon.
+options, also review the original doc/weewx/examples/pmon
 
 
 pmon+
