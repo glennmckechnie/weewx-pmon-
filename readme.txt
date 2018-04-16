@@ -1,6 +1,7 @@
 pmon+ - Process Monitor
 Copyright 2014 Matthew Wall
-Modified 2018 by Glenn McKechnie at https://github.com/glennmckechnie
+Modified 2018 by Glenn McKechnie at
+https://github.com/glennmckechnie/weewx-pmonplus
 
 Introduction for pmon
 This example illustrates how to implement a service and package it so that it

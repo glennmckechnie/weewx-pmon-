@@ -43,7 +43,7 @@ import weedb
 import weeutil.weeutil
 from weewx.engine import StdService
 
-VERSION = "0.5.3"
+pmonplus_version = "0.5.3"
 
 def logmsg(level, msg):
     syslog.syslog(level, 'pmon+: %s' % msg)
@@ -96,7 +96,8 @@ class ProcessMonitor(StdService):
     def __init__(self, engine, config_dict):
         super(ProcessMonitor, self).__init__(engine, config_dict)
 
-        loginf("service version %s" % VERSION)
+        self.pmonplus_version = pmonplus_version
+        loginf("service version %s" % self.pmonplus_version)
         d = config_dict.get('ProcessMonitor+', {})
         self.max_age = weeutil.weeutil.to_int(d.get('max_age', 2592000))
         # loginf("pmon+ max_age is %s" % self.max_age)
