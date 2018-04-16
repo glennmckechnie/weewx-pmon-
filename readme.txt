@@ -1,6 +1,7 @@
 pmon - Process Monitor
 Copyright 2014 Matthew Wall
 Source at doc/weewx/examples/pmon
+https://github.com/weewx/weewx/tree/master/examples/pmon
 #
 pmon+ - Process Monitor+
 Modified and renamed 2018 by Glenn McKechnie
