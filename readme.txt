@@ -1,9 +1,14 @@
-pmon+ - Process Monitor
+pmon - Process Monitor
 Copyright 2014 Matthew Wall
-Modified 2018 by Glenn McKechnie at
+Source at doc/weewx/examples/pmon
+#
+pmon+ - Process Monitor+
+Modified 2018 by Glenn McKechnie to become
+Database changes require the renaming to prevent clashes.
 https://github.com/glennmckechnie/weewx-pmonplus
+#
 
-Introduction for pmon
+Introduction for pmon (from the original notes)
 This example illustrates how to implement a service and package it so that it
 can be installed by the extension installer.  The pmon service collects memory
 usage information about a single process then saves it in its own database.
@@ -52,10 +57,10 @@ sudo /etc/init.d/weewx start
 
 This will result in a skin called pmon+ with a single web page that illustrates
 how to use the monitoring data.  See comments in pmon+.py for customization
-options.
+options, also review the original pmon.
 
 
-pmon and pmon+
+pmon+
 
 Entries added to weewx.conf
 
@@ -65,11 +70,10 @@ units : database entries will be modified using this value - before storing
 max_age : time after which database values will be deleted (see above).
 
 # Options for extension 'pmon+'
-[ProcessMonitor]
+[ProcessMonitor+]
     process = weewxd
-    data_binding = pmon_binding
+    data_binding = pmon+_binding
     #max_age = 1209600 # delete records after 14 days (default 30 days)
-    # The following is for pmon+ only
     #units = 1048576 # GB for y scale images (default 1024 - MB)
 
 See changelog.txt in the tarball for details of any changes.

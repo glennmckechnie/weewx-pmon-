@@ -18,8 +18,9 @@
  user includes such code elsewhere?
 * option to store values in the database as MB (this is a workaround to
  fix the image labelling for y axis when there are too many zeros - think GBs)
+* database changed to floating point to allow expression of smaller values (KB).
 * display $latest.tag-value as weewx tags for inclusion in index.html.tmpl
-* ** ToDo **  rework __main__ to run as stand alone.
+* reworked __main__ to run as stand alone.
 
 0.4 24apr2016
 * fixed database declarations for direct invocation
