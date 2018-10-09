@@ -46,13 +46,13 @@ Not all values are plotted by default. User choice decides.
 
 Installation instructions:
 1. download the package:
-wget -O weewx-pmon+.tar.gz https://github.com/glennmckechnie/weewx-pmonplus/archive/master.zip
+wget -O weewx-pmon+.zip https://github.com/glennmckechnie/weewx-pmonplus/archive/master.zip
 
 
 1) run the installer:
 use the package name (master.zip)
 
-wee_extension --install pmon+.tar.gz
+wee_extension --install weewx-pmon+.zip
 2) restart weewx:
 
 sudo /etc/init.d/weewx stop
