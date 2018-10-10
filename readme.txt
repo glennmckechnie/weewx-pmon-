@@ -75,7 +75,6 @@ max_age : time after which database values will be deleted (see above).
 
 # Options for extension 'pmon+'
 [ProcessMonitor+]
-    process = weewxd
     data_binding = pmon+_binding
     #max_age = 1209600 # delete records after 14 days (default 30 days)
     #units = 1048576 # GB for y scale images (default 1024 - MB)
