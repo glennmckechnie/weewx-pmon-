@@ -79,4 +79,31 @@ max_age : time after which database values will be deleted (see above).
     #max_age = 1209600 # delete records after 14 days (default 30 days)
     #units = 1048576 # GB for y scale images (default 1024 - MB)
 
-See changelog.txt in the tarball for details of any changes.
+The main chnages to the original pmon are as follows...
+
+0.5.3 March 2018
+* modifications to mwalls existing pmon by Glenn McKechie
+ https://github.com/glennmckechnie
+* renamed to pmon+ purely to prevent clashes with the existing pmon
+ extension. The databases are incompatable.
+* change process selection (weewxd) to use os.getpid() (PID) to enable usage
+ with multiple weewx instances. Run this extension within each weewx instance
+ , change the HTML_ROOT = /var/www/html/weewx/pmon entry in the [stdReport]
+ section of weewx.conf to seperate report output.
+* removed process = weewxd from weewx.conf. pmon+ will only ever track weewxd,
+ - see point directly above. There is no longer an option to change it so
+ removal is to prevent possible confusion. If you wish to track other
+ process's use the original pmon.
+* modify code to use swap and mem values from /proc/meminfo,
+ Code used was sourced from the cmon extension by mwall.
+* add res_rss column to database to allow storage of python-resource max rss
+ values for comparison to original mem_* values or debugging values, if the
+ user includes such code elsewhere?
+* option to store values in the database as MB (this is a workaround to
+ fix the image labelling for y axis when there are too many zeros - think GBs)
+* database changed to floating point to allow expression of smaller values (KB).
+* display $latest.tag-value as weewx tags for inclusion in index.html.tmpl
+* reworked __main__ to run as stand alone.
+
+See changelog.txt in the tarball for all changes.
+
