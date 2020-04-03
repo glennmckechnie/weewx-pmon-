@@ -43,7 +43,7 @@ import weedb
 import weeutil.weeutil
 from weewx.engine import StdService
 
-pmonplus_version = "0.5.3"
+pmonplus_version = "0.6.5"
 
 def logmsg(level, msg):
     syslog.syslog(level, 'pmon+: %s' % msg)
@@ -83,8 +83,10 @@ weewx.units.obs_group_dict['swap_used'] = 'group_data'
 weewx.units.obs_group_dict['mem_total'] = 'group_data'
 weewx.units.obs_group_dict['mem_free'] = 'group_data'
 weewx.units.obs_group_dict['mem_used'] = 'group_data'
+
 weewx.units.USUnits['group_data'] = 'MB'
 weewx.units.MetricUnits['group_data'] = 'MB'
+
 weewx.units.default_unit_format_dict['MB'] = '%.2f'
 weewx.units.default_unit_label_dict['MB'] = ' MB'
 # 1 Byte = 0.000001 MB (in decimal)
@@ -127,15 +129,33 @@ class ProcessMonitor(StdService):
             pass
 
     def new_archive_record(self, event):
-        """save data to database then prune old records as needed"""
+        """save data to database then prune old records as needed
+
+        event.record[] is the data from the main archive thread,
+        ie: the weather station. We now use these values and sync
+        our time and interval to use it. We are operating slightly
+        later in the cycle so the time is strictly incorrect, but
+        our interval definitely needs to match the main archive
+        interval; especially since the calc_weight changes in
+        weewx 3.92
+        wee_int: defines the archive interval we are syncing
+        wee_dT : dateTime to use as the record timestamp
+
+        """
         now = int(time.time() + 0.5)
         delta = now - event.record['dateTime']
+        #loginf("plus: now is %s, delta is %s, record-dT is %s, record-int is %s " % (now, delta, event.record['dateTime'], int(event.record['interval'])*60))
         if delta > event.record['interval'] * 60:
             logdbg("Skipping record: time difference %s too big" % delta)
-            return
+        #return
         if self.last_ts is not None:
-            self.save_data(self.get_data(now, self.last_ts))
-        self.last_ts = now
+            wee_int = event.record['interval']
+            wee_dT = event.record['dateTime']
+            loginf("plus: record as -- now = %s ,wee_int = %s, wee_dT = %s" % (now, wee_int, wee_dT))
+            self.save_data(self.get_data(wee_dT, wee_int))
+        else:
+            loginf("skipping record as self.last_ts is None")
+        self.last_ts = event.record['dateTime']
         if self.max_age is not None:
             self.prune_data(now - self.max_age)
 
@@ -155,18 +175,18 @@ class ProcessMonitor(StdService):
 
     COLUMNS = re.compile('[\S]+\s+[\d]+\s+[\d.]+\s+[\d.]+\s+([\d]+)\s+([\d]+)')
 
-    def get_data(self, now_ts, last_ts):
+    def get_data(self, wee_dT, wee_int):
         record = dict()
-        record['dateTime'] = now_ts
+        record['dateTime'] = wee_dT
         record['usUnits'] = weewx.METRIC
-        record['interval'] = int((now_ts - last_ts) / 60)
-        #  get_mem_data()
+        record['interval'] = wee_int
         try:
             self.wx_pid = str(os.getpid())
             cmd = 'ps up '+self.wx_pid
-            loginf("cmd is %s" % cmd)
+            #loginf("cmd is %s" % cmd)
             p = Popen(cmd, shell=True, stdout=PIPE)
-            o = p.communicate()[0]
+            o = p.communicate()[0].decode('ascii')
+            #o = p.communicate()[0] #?
             for line in o.split('\n'):
                 #  loginf("line is %s" % line)
                 if line.find(self.wx_pid) >= 0:
@@ -174,7 +194,7 @@ class ProcessMonitor(StdService):
                     if m:
                         record['mem_vsz'] = (float(m.group(1))/self.meg)
                         record['mem_rss'] = (float(m.group(2))/self.meg)
-        except (ValueError, IOError, KeyError), e:
+        except (ValueError, IOError, KeyError) as e:
             logerr('%s failed: %s' % (cmd, e))
 
         # now get swap data
@@ -196,7 +216,7 @@ class ProcessMonitor(StdService):
                 record['swap_total'] = (float(mem_['SwapTotal'].split()[0])/self.meg)
                 record['swap_free'] = (float(mem_['SwapFree'].split()[0])/self.meg)
                 record['swap_used'] = record['swap_total'] - record['swap_free']
-        except Exception, e:
+        except Exception as e:
             logdbg("read failed for %s: %s" % (filename, e))
 
         record['res_rss'] = float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/self.meg
@@ -253,20 +273,20 @@ if __name__ == "__main__":
     print("process PID is %s" % wx_pid)
     nowts = lastts = int(time.time())
     rec = svc.get_data(nowts, lastts)
-    print rec
+    print (rec)
 
     time.sleep(5)
     print("process PID is %s" % wx_pid)
     nowts = int(time.time())
     rec = svc.get_data(nowts, lastts)
-    print rec
+    print (rec)
 
     time.sleep(5)
     print("process PID is %s" % wx_pid)
     lastts = nowts
     nowts = int(time.time())
     rec = svc.get_data(nowts, lastts)
-    print rec
+    print (rec)
 
     os.remove('/var/tmp/pmon+.sdb')
-    print "removed %s" % '/var/tmp/pmon+.sdb'
+    print ("removed %s" % '/var/tmp/pmon+.sdb')
