@@ -43,7 +43,7 @@ import weedb
 import weeutil.weeutil
 from weewx.engine import StdService
 
-pmonplus_version = "0.6.5"
+pmonplus_version = "0.6.6"
 
 def logmsg(level, msg):
     syslog.syslog(level, 'pmon+: %s' % msg)
@@ -84,13 +84,13 @@ weewx.units.obs_group_dict['mem_total'] = 'group_data'
 weewx.units.obs_group_dict['mem_free'] = 'group_data'
 weewx.units.obs_group_dict['mem_used'] = 'group_data'
 
-weewx.units.USUnits['group_data'] = 'MB'
-weewx.units.MetricUnits['group_data'] = 'MB'
+weewx.units.USUnits['group_data'] = 'megabyte'
+weewx.units.MetricUnits['group_data'] = 'megabyte'
 
-weewx.units.default_unit_format_dict['MB'] = '%.2f'
-weewx.units.default_unit_label_dict['MB'] = ' MB'
+weewx.units.default_unit_format_dict['megabyte'] = '%.2f'
+weewx.units.default_unit_label_dict['megabyte'] = u' MB'
 # 1 Byte = 0.000001 MB (in decimal)
-weewx.units.conversionDict['MB'] = {'B': lambda x: x * 0.000001}
+weewx.units.conversionDict['megabyte'] = {'byte': lambda x: x * 0.000001}
 
 
 class ProcessMonitor(StdService):
@@ -104,7 +104,7 @@ class ProcessMonitor(StdService):
         self.max_age = weeutil.weeutil.to_int(d.get('max_age', 2592000))
         # loginf("pmon+ max_age is %s" % self.max_age)
         self.meg = float(d.get('units', '1024'))
-        # loginf("pmon+ units are %s" % self.meg)
+        #loginf("pmon+ units are %s" % self.meg)
 
         # get the database parameters we need to function
         binding = d.get('data_binding', 'pmon+_binding')
@@ -144,7 +144,7 @@ class ProcessMonitor(StdService):
         """
         now = int(time.time() + 0.5)
         delta = now - event.record['dateTime']
-        #loginf("plus: now is %s, delta is %s, record-dT is %s, record-int is %s " % (now, delta, event.record['dateTime'], int(event.record['interval'])*60))
+        loginf("plus: now is %s, delta is %s, record-dT is %s, record-int is %s " % (now, delta, event.record['dateTime'], int(event.record['interval'])*60))
         if delta > event.record['interval'] * 60:
             logdbg("Skipping record: time difference %s too big" % delta)
         #return
@@ -204,7 +204,9 @@ class ProcessMonitor(StdService):
             mem_ = dict()
             with open(filename) as fp:
                 for memline in fp:
-                    #  loginf("memline is %s" % memline)
+                    #loginf("memline is %s" % memline)
+                    # memline is MemTotal:         948304 kB
+                    # ie: 948304 kB = 948304000
                     if memline.find(':') >= 0:
                         (n, v) = memline.split(':', 1)
                         mem_[n.strip()] = v.strip()
